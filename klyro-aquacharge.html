@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KLYRO — AquaCharge · Engineering the Future of Portable Energy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --bg:#050B14; --bg2:#081221; --bg3:#0B1930;
+    --panel:rgba(255,255,255,0.035); --panel-hi:rgba(255,255,255,0.06);
+    --border:rgba(255,255,255,0.09); --border-hi:rgba(255,255,255,0.18);
+    --ink:#F2F8FC; --ink-dim:#8CA0B4; --ink-faint:#5A6E80;
+    --blue:#2E7CF6; --cyan:#3FE0FF; --glow:rgba(63,224,255,0.35);
+    --display:'Sora',sans-serif; --sans:'Inter',-apple-system,sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    line-height:1.65; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(46,124,246,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 88% 4%, rgba(63,224,255,0.06) 0%, transparent 35%);
+  }
+  a{color:inherit;text-decoration:none;}
+  ul{list-style:none;}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 32px;}
+  section{position:relative;padding:130px 0;}
+  .dotgrid{
+    position:absolute;inset:0;pointer-events:none;opacity:0.5;
+    background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size:26px 26px;
+    mask-image:radial-gradient(ellipse 60% 50% at 50% 0%, black 0%, transparent 75%);
+  }
+  .glass{
+    background:var(--panel); border:1px solid var(--border);
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    border-radius:20px;
+  }
+  .eyebrow{
+    font-family:var(--mono); font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--cyan); display:inline-flex; align-items:center; gap:9px; margin-bottom:20px;
+  }
+  .eyebrow::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px 2px var(--glow);}
+  .section-head{max-width:640px;margin:0 auto 64px;text-align:center;}
+  .section-head h2{
+    font-family:var(--display);font-weight:700;font-size:clamp(1.9rem,3.6vw,2.7rem);
+    letter-spacing:-0.02em;line-height:1.2;
+  }
+  .section-head p{color:var(--ink-dim);margin-top:16px;font-size:1.02rem;}
+  .grad-text{
+    background:linear-gradient(100deg,var(--ink) 10%,var(--cyan) 60%,var(--blue) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;padding:15px 30px;border-radius:100px;
+    font-size:0.94rem;font-weight:600;font-family:var(--sans);cursor:pointer;border:1px solid transparent;
+    transition:transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+  }
+  .btn-primary{background:linear-gradient(100deg,var(--blue),var(--cyan));color:#04121C;}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 40px -8px var(--glow);}
+  .btn-ghost{border-color:var(--border-hi);color:var(--ink);background:rgba(255,255,255,0.02);}
+  .btn-ghost:hover{border-color:var(--cyan);background:rgba(63,224,255,0.06);}
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity 0.8s ease,transform 0.8s ease;}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  /* ================= NAV ================= */
+  header{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(5,11,20,0.7);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;max-width:1240px;margin:0 auto;}
+  .logo{font-family:var(--display);font-weight:800;font-size:1.25rem;letter-spacing:-0.01em;display:flex;align-items:center;gap:9px;}
+  .logo .dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px 3px var(--glow);animation:pulseDot 2.6s ease-in-out infinite;}
+  @keyframes pulseDot{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.5);opacity:0.6;}}
+  .nav-links{display:flex;gap:32px;align-items:center;}
+  .nav-links a:not(.nav-cta){font-size:0.88rem;color:var(--ink-dim);transition:color 0.2s ease;}
+  .nav-links a:not(.nav-cta):hover{color:var(--ink);}
+  .nav-cta{background:linear-gradient(100deg,var(--blue),var(--cyan));color:#04121C!important;padding:10px 22px;border-radius:100px;font-size:0.86rem;font-weight:700;}
+  .nav-toggle{display:none;background:none;border:none;cursor:pointer;}
+  .nav-toggle span{display:block;width:22px;height:2px;background:var(--ink);margin:5px 0;}
+
+  /* ================= HERO ================= */
+  .hero{padding:170px 0 60px;min-height:92vh;display:flex;align-items:center;position:relative;overflow:hidden;}
+  #hero-canvas{position:absolute;top:0;right:-6%;width:60%;height:100%;z-index:0;opacity:0.95;}
+  .hero-inner{position:relative;z-index:2;text-align:center;max-width:840px;margin:0 auto;}
+  .hero-inner .eyebrow{justify-content:center;}
+  .hero h1{
+    font-family:var(--display);font-weight:800;letter-spacing:-0.03em;line-height:1.02;
+    font-size:clamp(2.8rem,7vw,5.6rem);margin-bottom:26px;
+  }
+  .hero p{font-size:1.15rem;color:var(--ink-dim);max-width:600px;margin:0 auto 40px;}
+  .hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;}
+  .hero-tag{
+    font-family:var(--mono);font-size:0.78rem;color:var(--ink-faint);letter-spacing:0.06em;margin-top:34px;
+  }
+  .waves{position:absolute;left:0;right:0;bottom:0;height:220px;z-index:1;opacity:0.55;pointer-events:none;}
+
+  /* ================= LOGO STRIP ================= */
+  .strip{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:26px 0;}
+  .strip .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:0.76rem;color:var(--ink-faint);letter-spacing:0.05em;}
+
+  /* ================= ABOUT (2-col) ================= */
+  .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+  .about-copy .eyebrow{margin-bottom:18px;}
+  .about-copy h2{font-family:var(--display);font-weight:700;font-size:clamp(1.8rem,3.2vw,2.4rem);line-height:1.2;margin-bottom:22px;letter-spacing:-0.01em;}
+  .about-copy p{color:var(--ink-dim);margin-bottom:20px;}
+  .mv-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .mv-card{background:var(--bg2);padding:32px 28px;}
+  .mv-card .lbl{font-family:var(--mono);font-size:0.72rem;color:var(--cyan);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px;display:block;}
+  .mv-card p{font-family:var(--display);font-weight:600;font-size:1.05rem;line-height:1.4;}
+
+  /* ================= HOW IT WORKS ================= */
+  .flow{max-width:640px;margin:0 auto;position:relative;}
+  .flow::before{content:'';position:absolute;left:23px;top:14px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--blue),var(--cyan),transparent);}
+  .flow-step{display:flex;gap:26px;padding:22px 0;position:relative;}
+  .flow-step .node{
+    width:48px;height:48px;border-radius:50%;flex-shrink:0;
+    background:var(--bg2);border:1px solid var(--border-hi);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:0.85rem;color:var(--cyan);position:relative;z-index:1;
+  }
+  .flow-step .node.active{background:linear-gradient(140deg,var(--blue),var(--cyan));color:#04121C;border-color:transparent;}
+  .flow-step .body h4{font-family:var(--display);font-weight:600;font-size:1.08rem;margin-bottom:6px;}
+  .flow-step .body p{color:var(--ink-dim);font-size:0.92rem;}
+
+  /* ================= FEATURES (chip grid) ================= */
+  .feat-tabs{display:flex;justify-content:center;gap:10px;margin-bottom:44px;flex-wrap:wrap;}
+  .feat-tab{
+    font-family:var(--mono);font-size:0.8rem;color:var(--ink-dim);padding:9px 18px;border-radius:100px;
+    border:1px solid var(--border);cursor:pointer;transition:all 0.2s ease;background:transparent;
+  }
+  .feat-tab.active{color:#04121C;background:linear-gradient(100deg,var(--blue),var(--cyan));border-color:transparent;}
+  .chip-grid{display:none;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .chip-grid.active{display:grid;}
+  .chip{
+    padding:22px 20px;border-radius:14px;background:var(--panel);border:1px solid var(--border);
+    display:flex;align-items:center;gap:12px;font-size:0.88rem;color:var(--ink);
+    transition:border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+  }
+  .chip:hover{border-color:var(--border-hi);background:var(--panel-hi);transform:translateY(-2px);}
+  .chip .ic{width:8px;height:8px;border-radius:2px;background:var(--cyan);flex-shrink:0;box-shadow:0 0 8px 1px var(--glow);}
+
+  /* ================= AI FEATURES ================= */
+  .ai-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:18px;overflow:hidden;}
+  .ai-card{background:var(--bg2);padding:34px 26px;transition:background 0.3s ease;}
+  .ai-card:hover{background:var(--bg3);}
+  .ai-card .idx{font-family:var(--mono);font-size:0.75rem;color:var(--cyan);display:block;margin-bottom:16px;}
+  .ai-card p{font-family:var(--display);font-weight:600;font-size:0.98rem;line-height:1.35;}
+
+  /* ================= SPECS ================= */
+  .specs-wrap{display:grid;grid-template-columns:0.85fr 1.15fr;gap:50px;align-items:center;}
+  .spec-visual{aspect-ratio:1/1.1;position:relative;display:flex;align-items:center;justify-content:center;}
+  .spec-visual .device{
+    width:56%;height:78%;border-radius:34px;
+    background:linear-gradient(155deg,#14263B,#081221 70%);
+    border:1px solid var(--border-hi);position:relative;
+    box-shadow:0 40px 100px -30px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.08);
+    animation:float 6s ease-in-out infinite;
+  }
+  .spec-visual .device::before{
+    content:'';position:absolute;top:14%;left:50%;transform:translateX(-50%);width:60%;height:8%;
+    border-radius:8px;background:rgba(63,224,255,0.12);border:1px solid rgba(63,224,255,0.3);
+    box-shadow:0 0 20px 2px var(--glow);
+  }
+  .spec-visual .device::after{
+    content:'';position:absolute;bottom:10%;left:50%;transform:translateX(-50%);width:70%;height:2px;
+    background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  }
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
+  .spec-list{border-top:1px solid var(--border);}
+  .spec-row{display:flex;justify-content:space-between;padding:20px 4px;border-bottom:1px solid var(--border);}
+  .spec-row .k{font-family:var(--mono);font-size:0.8rem;color:var(--ink-faint);letter-spacing:0.04em;text-transform:uppercase;}
+  .spec-row .v{font-family:var(--display);font-weight:600;font-size:1rem;text-align:right;}
+
+  /* ================= APP SECTION ================= */
+  .app-wrap{display:grid;grid-template-columns:0.8fr 1.2fr;gap:60px;align-items:center;}
+  .phone{
+    width:100%;max-width:280px;aspect-ratio:9/18.5;border-radius:36px;margin:0 auto;
+    background:linear-gradient(165deg,#0D1B2C,#050B14);border:1px solid var(--border-hi);
+    padding:14px;position:relative;box-shadow:0 40px 90px -30px rgba(0,0,0,0.7);
+  }
+  .phone-screen{width:100%;height:100%;border-radius:24px;background:var(--bg2);border:1px solid var(--border);padding:22px 18px;display:flex;flex-direction:column;gap:14px;}
+  .phone-screen .ps-lbl{font-family:var(--mono);font-size:0.62rem;color:var(--ink-faint);letter-spacing:0.08em;text-transform:uppercase;}
+  .phone-screen .ps-big{font-family:var(--display);font-weight:700;font-size:2.1rem;background:linear-gradient(100deg,var(--ink),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .phone-bar{height:6px;border-radius:4px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:auto;}
+  .phone-bar .fill{height:100%;width:72%;background:linear-gradient(90deg,var(--blue),var(--cyan));animation:fillbar 3s ease-in-out infinite alternate;}
+  @keyframes fillbar{from{width:40%;}to{width:78%;}}
+  .app-feats{list-style:none;}
+  .app-feats li{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--border);font-size:0.95rem;color:var(--ink-dim);}
+  .app-feats li:first-child{border-top:none;}
+  .app-feats li::before{content:'';width:6px;height:6px;border-radius:2px;background:var(--cyan);box-shadow:0 0 8px 1px var(--glow);flex-shrink:0;}
+
+  /* ================= AUDIENCE ================= */
+  .audience-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+  .aud-chip{
+    padding:26px 16px;text-align:center;border-radius:14px;background:var(--panel);border:1px solid var(--border);
+    font-size:0.9rem;font-weight:500;transition:all 0.25s ease;
+  }
+  .aud-chip:hover{border-color:var(--cyan);background:rgba(63,224,255,0.05);transform:translateY(-3px);}
+
+  /* ================= COMPARISON ================= */
+  .comp-table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:16px;border:1px solid var(--border);}
+  .comp-table th,.comp-table td{padding:16px 22px;text-align:left;border-bottom:1px solid var(--border);font-size:0.92rem;}
+  .comp-table th{font-family:var(--mono);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-faint);background:var(--bg2);}
+  .comp-table td:not(:first-child){text-align:center;}
+  .comp-table tbody tr:last-child td{border-bottom:none;}
+  .comp-table .yes{color:var(--cyan);font-weight:600;}
+  .comp-table .no{color:var(--ink-faint);}
+  .comp-table thead th:last-child{color:var(--cyan);}
+
+  /* ================= ROADMAP ================= */
+  .roadmap{display:flex;justify-content:space-between;position:relative;flex-wrap:wrap;gap:30px 0;}
+  .roadmap::before{content:'';position:absolute;top:9px;left:0;right:0;height:1px;background:var(--border);}
+  .rm-step{flex:1;min-width:140px;text-align:center;position:relative;}
+  .rm-step .rm-dot{width:18px;height:18px;border-radius:50%;background:var(--bg2);border:1px solid var(--border-hi);margin:0 auto 18px;position:relative;z-index:1;}
+  .rm-step.done .rm-dot{background:linear-gradient(140deg,var(--blue),var(--cyan));border-color:transparent;box-shadow:0 0 14px 2px var(--glow);}
+  .rm-step .rm-lbl{font-family:var(--display);font-weight:600;font-size:0.92rem;}
+
+  /* ================= VALUES ================= */
+  .values-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
+  .val-card{padding:30px 22px;border-radius:16px;background:var(--panel);border:1px solid var(--border);text-align:center;}
+  .val-card .vn{font-family:var(--mono);font-size:0.75rem;color:var(--cyan);margin-bottom:14px;display:block;}
+  .val-card h4{font-family:var(--display);font-weight:600;font-size:1rem;}
+
+  /* ================= TESTIMONIALS ================= */
+  .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .testi-card{padding:32px 28px;border-radius:18px;}
+  .testi-card p{font-size:0.98rem;color:var(--ink);margin-bottom:22px;}
+  .testi-who{display:flex;align-items:center;gap:12px;}
+  .testi-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(140deg,var(--blue),var(--cyan));flex-shrink:0;}
+  .testi-who .n{font-weight:600;font-size:0.9rem;}
+  .testi-who .r{font-size:0.8rem;color:var(--ink-faint);}
+
+  /* ================= FAQ ================= */
+  .faq-list{max-width:760px;margin:0 auto;}
+  .faq-item{border-bottom:1px solid var(--border);}
+  .faq-q{
+    width:100%;text-align:left;background:none;border:none;color:var(--ink);cursor:pointer;
+    padding:24px 4px;display:flex;justify-content:space-between;align-items:center;
+    font-family:var(--display);font-weight:600;font-size:1.02rem;
+  }
+  .faq-q .plus{font-family:var(--mono);font-size:1.2rem;color:var(--cyan);transition:transform 0.3s ease;}
+  .faq-item.open .plus{transform:rotate(45deg);}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height 0.35s ease;}
+  .faq-a p{padding:0 4px 24px;color:var(--ink-dim);font-size:0.95rem;max-width:640px;}
+
+  /* ================= CONTACT ================= */
+  .contact-wrap{max-width:640px;margin:0 auto;padding:48px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .form-field{display:flex;flex-direction:column;gap:8px;}
+  .form-field.full{grid-column:1/-1;}
+  .form-field label{font-family:var(--mono);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-faint);}
+  .form-field input,.form-field textarea{
+    background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;
+    padding:13px 14px;color:var(--ink);font-family:var(--sans);font-size:0.94rem;
+    transition:border-color 0.2s ease;
+  }
+  .form-field input:focus,.form-field textarea:focus{outline:none;border-color:var(--cyan);}
+  .form-field textarea{resize:vertical;min-height:110px;}
+  .contact-wrap .btn{width:100%;justify-content:center;margin-top:8px;}
+  #formNote{font-size:0.85rem;color:var(--cyan);text-align:center;margin-top:14px;display:none;}
+
+  /* ================= FOOTER ================= */
+  footer{padding:56px 0 40px;border-top:1px solid var(--border);}
+  .footer-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px;margin-bottom:36px;}
+  .footer-top p{color:var(--ink-dim);max-width:280px;font-size:0.92rem;margin-top:8px;}
+  .footer-links{display:flex;gap:26px;}
+  .footer-links a{font-size:0.86rem;color:var(--ink-dim);}
+  .footer-links a:hover{color:var(--cyan);}
+  .footer-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:24px;border-top:1px solid var(--border);font-family:var(--mono);font-size:0.78rem;color:var(--ink-faint);}
+
+  /* ================= RESPONSIVE ================= */
+  @media (max-width:980px){
+    .about-grid,.specs-wrap,.app-wrap{grid-template-columns:1fr;}
+    .mv-grid{margin-top:20px;}
+    .ai-grid{grid-template-columns:repeat(2,1fr);}
+    .chip-grid{grid-template-columns:repeat(2,1fr);}
+    .audience-grid{grid-template-columns:repeat(2,1fr);}
+    .values-grid{grid-template-columns:repeat(2,1fr);}
+    .testi-grid{grid-template-columns:1fr;}
+    .roadmap{flex-direction:column;align-items:flex-start;gap:26px;}
+    .roadmap::before{display:none;}
+    .rm-step{text-align:left;display:flex;align-items:center;gap:14px;}
+    .rm-step .rm-dot{margin:0;}
+    #hero-canvas{display:none;}
+    .nav-links{
+      position:fixed;top:64px;left:0;right:0;background:var(--bg);flex-direction:column;
+      padding:24px 32px;gap:20px;border-bottom:1px solid var(--border);
+      transform:translateY(-140%);transition:transform 0.3s ease;z-index:150;
+    }
+    .nav-links.open{transform:translateY(0);}
+    .nav-toggle{display:block;}
+    .form-row{grid-template-columns:1fr;}
+    .contact-wrap{padding:32px 24px;}
+  }
+  @media (max-width:600px){
+    .chip-grid,.audience-grid{grid-template-columns:1fr;}
+    section{padding:90px 0;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;}
+    html{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="#top" class="logo"><span class="dot"></span>KLYRO</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a href="#product">Product</a>
+      <a href="#features">Features</a>
+      <a href="#specs">Specs</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact" class="nav-cta">Pre-Order</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <canvas id="hero-canvas"></canvas>
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path id="wavePath1" d="M0,120 C 240,180 480,60 720,110 C 960,160 1200,80 1440,130 L1440,220 L0,220 Z" fill="url(#waveGrad1)"/>
+      <path id="wavePath2" d="M0,150 C 260,90 500,190 740,140 C 980,90 1220,170 1440,110 L1440,220 L0,220 Z" fill="url(#waveGrad2)"/>
+      <defs>
+        <linearGradient id="waveGrad1" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#2E7CF6" stop-opacity="0.18"/>
+          <stop offset="1" stop-color="#3FE0FF" stop-opacity="0.06"/>
+        </linearGradient>
+        <linearGradient id="waveGrad2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#3FE0FF" stop-opacity="0.1"/>
+          <stop offset="1" stop-color="#2E7CF6" stop-opacity="0.04"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="hero-inner">
+      <span class="eyebrow">Engineering the Future of Portable Energy</span>
+      <h1>Power <span class="grad-text">Beyond Limits.</span></h1>
+      <p>Meet AquaCharge by KLYRO — an intelligent hybrid portable power bank that combines USB‑C charging with renewable energy harvesting from flowing water, and optional solar, for adventures, emergencies, and remote work.</p>
+      <div class="hero-actions">
+        <a href="#contact" class="btn btn-primary">Pre-Order Now</a>
+        <a href="#how" class="btn btn-ghost">Watch Product Demo</a>
+      </div>
+      <div class="hero-tag">HYBRID CHARGING · 20,000–30,000mAh · IP67 · AI POWER MANAGEMENT</div>
+    </div>
+  </section>
+
+  <div class="strip">
+    <div class="wrap">
+      <span>DESIGNED FOR FIELD DEPLOYMENT</span>
+      <span>ENGINEERED IN-HOUSE</span>
+      <span>IP67 WATER RESISTANT</span>
+      <span>PROTOTYPE PHASE — TESTING NOW</span>
+    </div>
+  </div>
+
+  <!-- ================= ABOUT KLYRO ================= -->
+  <section id="about">
+    <div class="dotgrid"></div>
+    <div class="wrap about-grid">
+      <div class="about-copy reveal">
+        <span class="eyebrow">Who We Are</span>
+        <h2>Building energy hardware for a world that isn't always plugged in.</h2>
+        <p>KLYRO is a next-generation hardware innovation company focused on intelligent, sustainable, and reliable portable energy solutions. We combine advanced engineering with renewable technologies to redefine how people generate, store, and use energy in everyday life.</p>
+      </div>
+      <div class="mv-grid reveal">
+        <div class="mv-card">
+          <span class="lbl">Mission</span>
+          <p>Empower every person with reliable portable energy.</p>
+        </div>
+        <div class="mv-card">
+          <span class="lbl">Vision</span>
+          <p>Become the world's leading portable renewable energy hardware company.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ABOUT AQUACHARGE ================= -->
+  <section id="product" style="background:var(--bg2);">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">Introducing AquaCharge</span>
+        <h2>One power bank. Two ways to refill it.</h2>
+        <p>AquaCharge supports fast USB‑C charging while also harvesting supplemental energy from flowing water through a compact micro‑hydroelectric module — built for travel, camping, disaster preparedness, field work, and remote environments.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HOW IT WORKS ================= -->
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">The Charging Pipeline</span>
+        <h2>How AquaCharge keeps you powered</h2>
+      </div>
+      <div class="flow reveal">
+        <div class="flow-step"><div class="node active">01</div><div class="body"><h4>Normal USB‑C Charging</h4><p>Plug in anywhere for fast, familiar charging at full speed.</p></div></div>
+        <div class="flow-step"><div class="node">02</div><div class="body"><h4>Internal Battery Stores Energy</h4><p>A 20,000–30,000mAh cell holds charge until you need it.</p></div></div>
+        <div class="flow-step"><div class="node">03</div><div class="body"><h4>Deploy Micro Hydro Generator</h4><p>Place the sealed module in a stream, tap, or flowing water source.</p></div></div>
+        <div class="flow-step"><div class="node">04</div><div class="body"><h4>Renewable Energy Converted</h4><p>Kinetic water flow is converted into usable electrical current.</p></div></div>
+        <div class="flow-step"><div class="node">05</div><div class="body"><h4>Smart Power Management Optimizes</h4><p>Onboard AI blends input sources and regulates the charge rate.</p></div></div>
+        <div class="flow-step"><div class="node active">06</div><div class="body"><h4>Charge Any USB Device</h4><p>Phones, tablets, cameras, laptops, drones — all from one bank.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FEATURES ================= -->
+  <section id="features" style="background:var(--bg2);">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">Everything Onboard</span>
+        <h2>Built with no shortage of engineering</h2>
+      </div>
+      <div class="feat-tabs reveal">
+        <button class="feat-tab active" data-tab="charging">Charging</button>
+        <button class="feat-tab" data-tab="intelligence">Intelligence & Protection</button>
+        <button class="feat-tab" data-tab="design">Design & Connectivity</button>
+      </div>
+      <div class="chip-grid active reveal" data-panel="charging">
+        <div class="chip"><span class="ic"></span>USB‑C Fast Charging</div>
+        <div class="chip"><span class="ic"></span>Micro Hydro Energy Harvesting</div>
+        <div class="chip"><span class="ic"></span>Optional Solar Charging</div>
+        <div class="chip"><span class="ic"></span>20,000–30,000mAh Battery</div>
+        <div class="chip"><span class="ic"></span>100W USB‑C PD</div>
+        <div class="chip"><span class="ic"></span>Quick Charge Support</div>
+        <div class="chip"><span class="ic"></span>Wireless Charging</div>
+        <div class="chip"><span class="ic"></span>Eco Charging Mode</div>
+      </div>
+      <div class="chip-grid reveal" data-panel="intelligence">
+        <div class="chip"><span class="ic"></span>AI Smart Battery Management</div>
+        <div class="chip"><span class="ic"></span>Battery Health Monitor</div>
+        <div class="chip"><span class="ic"></span>Temperature Protection</div>
+        <div class="chip"><span class="ic"></span>Overcharge Protection</div>
+        <div class="chip"><span class="ic"></span>Short Circuit Protection</div>
+        <div class="chip"><span class="ic"></span>Reverse Current Protection</div>
+        <div class="chip"><span class="ic"></span>Low Power Mode</div>
+        <div class="chip"><span class="ic"></span>SOS Emergency Mode</div>
+      </div>
+      <div class="chip-grid reveal" data-panel="design">
+        <div class="chip"><span class="ic"></span>OLED Smart Display</div>
+        <div class="chip"><span class="ic"></span>Water Resistant Design</div>
+        <div class="chip"><span class="ic"></span>Emergency Flashlight</div>
+        <div class="chip"><span class="ic"></span>Bluetooth Connectivity</div>
+        <div class="chip"><span class="ic"></span>Mobile Companion App</div>
+        <div class="chip"><span class="ic"></span>Firmware Updates</div>
+        <div class="chip"><span class="ic"></span>Premium Aluminum Body</div>
+        <div class="chip"><span class="ic"></span>Carbon Saving Tracker</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SMART AI ================= -->
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">Intelligent Energy Management</span>
+        <h2>An AI that manages power, so you don't have to</h2>
+      </div>
+      <div class="ai-grid reveal">
+        <div class="ai-card"><span class="idx">01</span><p>Predict remaining battery life</p></div>
+        <div class="ai-card"><span class="idx">02</span><p>Detect battery aging</p></div>
+        <div class="ai-card"><span class="idx">03</span><p>Optimize charging speed</p></div>
+        <div class="ai-card"><span class="idx">04</span><p>Auto-select best charging source</p></div>
+        <div class="ai-card"><span class="idx">05</span><p>Monitor battery temperature</p></div>
+        <div class="ai-card"><span class="idx">06</span><p>Energy generation analytics</p></div>
+        <div class="ai-card"><span class="idx">07</span><p>Renewable energy statistics</p></div>
+        <div class="ai-card"><span class="idx">08</span><p>Maintenance alerts</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SPECS ================= -->
+  <section id="specs" style="background:var(--bg2);">
+    <div class="wrap specs-wrap">
+      <div class="spec-visual reveal">
+        <div class="device"></div>
+      </div>
+      <div class="reveal">
+        <span class="eyebrow">Technical Specifications</span>
+        <h2 style="font-family:var(--display);font-weight:700;font-size:clamp(1.7rem,3vw,2.2rem);margin-bottom:8px;">Engineered down to the cell</h2>
+        <div class="spec-list">
+          <div class="spec-row"><span class="k">Battery</span><span class="v">20,000–30,000mAh</span></div>
+          <div class="spec-row"><span class="k">Outputs</span><span class="v">USB‑C PD 100W · USB‑A · Wireless</span></div>
+          <div class="spec-row"><span class="k">Inputs</span><span class="v">USB‑C · Micro Hydro · Solar (optional)</span></div>
+          <div class="spec-row"><span class="k">Display</span><span class="v">1.8" OLED</span></div>
+          <div class="spec-row"><span class="k">Material</span><span class="v">Premium Aluminum Alloy</span></div>
+          <div class="spec-row"><span class="k">Protection</span><span class="v">IP67 Water Resistant</span></div>
+          <div class="spec-row"><span class="k">Weight</span><span class="v">~700g</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= APP ================= -->
+  <section>
+    <div class="wrap app-wrap">
+      <div class="phone reveal">
+        <div class="phone-screen">
+          <span class="ps-lbl">Battery Level</span>
+          <span class="ps-big">78%</span>
+          <span class="ps-lbl">Source: Micro Hydro</span>
+          <span class="ps-lbl">Output: 22W to iPhone</span>
+          <div class="phone-bar"><div class="fill"></div></div>
+        </div>
+      </div>
+      <div class="reveal">
+        <span class="eyebrow">Companion App</span>
+        <h2 style="font-family:var(--display);font-weight:700;font-size:clamp(1.7rem,3vw,2.2rem);margin-bottom:24px;">See exactly where your power comes from</h2>
+        <ul class="app-feats">
+          <li>Live battery percentage</li>
+          <li>Active charging source</li>
+          <li>Power input & output in real time</li>
+          <li>Renewable energy generated</li>
+          <li>Battery health tracking</li>
+          <li>GPS device finder</li>
+          <li>Over-the-air firmware updates</li>
+          <li>One-tap Emergency SOS</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= AUDIENCE ================= -->
+  <section style="background:var(--bg2);">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">Who It's For</span>
+        <h2>Wherever the grid runs out</h2>
+      </div>
+      <div class="audience-grid reveal">
+        <div class="aud-chip">Camping</div>
+        <div class="aud-chip">Travel</div>
+        <div class="aud-chip">Photography</div>
+        <div class="aud-chip">Military</div>
+        <div class="aud-chip">Emergency Rescue</div>
+        <div class="aud-chip">Disaster Relief</div>
+        <div class="aud-chip">Researchers</div>
+        <div class="aud-chip">Engineers</div>
+        <div class="aud-chip">Adventure Sports</div>
+        <div class="aud-chip">Remote Workers</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= COMPARISON ================= -->
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">Why Choose AquaCharge</span>
+        <h2>Not just another power bank</h2>
+      </div>
+      <div class="glass reveal" style="padding:4px;overflow-x:auto;">
+        <table class="comp-table">
+          <thead><tr><th>Feature</th><th>Standard Power Bank</th><th>AquaCharge</th></tr></thead>
+          <tbody>
+            <tr><td>USB Charging</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+            <tr><td>Fast Charging</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+            <tr><td>Water Energy Harvesting</td><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><td>Optional Solar Charging</td><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><td>AI Battery Management</td><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><td>Wireless Charging</td><td class="no">Some</td><td class="yes">Yes</td></tr>
+            <tr><td>Emergency SOS</td><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><td>Outdoor Ready</td><td class="no">Limited</td><td class="yes">Yes</td></tr>
+            <tr><td>Battery Analytics</td><td class="no">No</td><td class="yes">Yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ROADMAP ================= -->
+  <section style="background:var(--bg2);">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">Where We Are</span>
+        <h2>From idea to global launch</h2>
+      </div>
+      <div class="roadmap reveal">
+        <div class="rm-step done"><div class="rm-dot"></div><div class="rm-lbl">Idea</div></div>
+        <div class="rm-step done"><div class="rm-dot"></div><div class="rm-lbl">Engineering</div></div>
+        <div class="rm-step done"><div class="rm-dot"></div><div class="rm-lbl">Prototype</div></div>
+        <div class="rm-step"><div class="rm-dot"></div><div class="rm-lbl">Testing</div></div>
+        <div class="rm-step"><div class="rm-dot"></div><div class="rm-lbl">Production</div></div>
+        <div class="rm-step"><div class="rm-dot"></div><div class="rm-lbl">Global Launch</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VALUES ================= -->
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">Our Values</span>
+        <h2>What guides how we build</h2>
+      </div>
+      <div class="values-grid reveal">
+        <div class="val-card"><span class="vn">01</span><h4>Innovation</h4></div>
+        <div class="val-card"><span class="vn">02</span><h4>Reliability</h4></div>
+        <div class="val-card"><span class="vn">03</span><h4>Sustainability</h4></div>
+        <div class="val-card"><span class="vn">04</span><h4>Engineering Excellence</h4></div>
+        <div class="val-card"><span class="vn">05</span><h4>Customer First</h4></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TESTIMONIALS ================= -->
+  <section style="background:var(--bg2);">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">Early Feedback</span>
+        <h2>What early testers are saying</h2>
+      </div>
+      <div class="testi-grid reveal">
+        <div class="testi-card glass">
+          <p>"I charged my phone from a stream on day three of a trek with no outlet in sight. That alone sold me."</p>
+          <div class="testi-who"><div class="testi-avatar"></div><div><div class="n">Field Tester</div><div class="r">Outdoor Expedition Team</div></div></div>
+        </div>
+        <div class="testi-card glass">
+          <p>"The app makes the AI power management feel real, not like a marketing line. You can watch it switch sources."</p>
+          <div class="testi-who"><div class="testi-avatar"></div><div><div class="n">Beta User</div><div class="r">Remote Field Engineer</div></div></div>
+        </div>
+        <div class="testi-card glass">
+          <p>"We keep one AquaCharge in every disaster-response kit now. It's the backup that doesn't depend on a backup."</p>
+          <div class="testi-who"><div class="testi-avatar"></div><div><div class="n">Program Lead</div><div class="r">Emergency Relief Org</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">Questions</span>
+        <h2>Frequently asked</h2>
+      </div>
+      <div class="faq-list reveal">
+        <div class="faq-item">
+          <button class="faq-q">What is AquaCharge? <span class="plus">+</span></button>
+          <div class="faq-a"><p>AquaCharge is a hybrid portable power bank from KLYRO that charges via USB‑C and supplements that charge with energy harvested from flowing water, with optional solar support.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">How does the hydro charging system work? <span class="plus">+</span></button>
+          <div class="faq-a"><p>A sealed micro‑hydroelectric module is placed in flowing water — a stream, tap, or similar source — where it converts the water's motion into a supplemental electrical current fed into the battery.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Can it charge laptops? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Yes. AquaCharge outputs up to 100W over USB‑C PD, enough for most laptops in addition to phones, tablets, cameras, and drones.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">How long does it take to charge? <span class="plus">+</span></button>
+          <div class="faq-a"><p>A full charge from an outlet takes roughly 3 hours. Hydro charging is a slower supplemental trickle designed for topping up in the field, not a full refill.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Is it waterproof? <span class="plus">+</span></button>
+          <div class="faq-a"><p>AquaCharge carries an IP67 rating, meaning it's dust-tight and resistant to temporary immersion in water.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Is solar charging supported? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Yes, an optional solar input is supported for additional charging when hydro or wall power isn't available.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section id="contact" style="background:var(--bg2);">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow" style="justify-content:center;">Get In Touch</span>
+        <h2>Pre-order or talk to the team</h2>
+      </div>
+      <form class="contact-wrap glass reveal" id="contactForm">
+        <div class="form-row">
+          <div class="form-field"><label>Company Name</label><input type="text" placeholder="Optional"></div>
+          <div class="form-field"><label>Phone</label><input type="tel" placeholder="Optional"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field full"><label>Email</label><input type="email" required placeholder="you@company.com"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field full"><label>Message</label><textarea placeholder="Tell us what you're looking for"></textarea></div>
+        </div>
+        <button type="submit" class="btn btn-primary">Send Message</button>
+        <div id="formNote">Thanks — we'll be in touch shortly.</div>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <a href="#top" class="logo"><span class="dot"></span>KLYRO</a>
+        <p>Engineering the Future of Portable Energy.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#">LinkedIn</a>
+        <a href="#">GitHub</a>
+        <a href="#">Instagram</a>
+        <a href="#">YouTube</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 KLYRO. All Rights Reserved.</span>
+      <span>AquaCharge™ — Hybrid Portable Power</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* NAV */
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+  /* SCROLL REVEAL */
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  /* FEATURE TABS */
+  const tabs = document.querySelectorAll('.feat-tab');
+  const panels = document.querySelectorAll('.chip-grid');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      panels.forEach(p => p.classList.toggle('active', p.dataset.panel === tab.dataset.tab));
+    });
+  });
+
+  /* FAQ ACCORDION */
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const q = item.querySelector('.faq-q');
+    const a = item.querySelector('.faq-a');
+    q.addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(o => { o.classList.remove('open'); o.querySelector('.faq-a').style.maxHeight = null; });
+      if(!isOpen){ item.classList.add('open'); a.style.maxHeight = a.scrollHeight + 'px'; }
+    });
+  });
+
+  /* CONTACT FORM */
+  const form = document.getElementById('contactForm');
+  const note = document.getElementById('formNote');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    note.style.display = 'block';
+    form.querySelector('.btn').textContent = 'Message Sent';
+  });
+
+  /* WAVE ANIMATION */
+  let t = 0;
+  function animateWaves(){
+    t += 0.006;
+    const amp = 30, base1 = 120, base2 = 150;
+    const p1 = document.getElementById('wavePath1');
+    const p2 = document.getElementById('wavePath2');
+    if(p1){
+      const y1 = base1 + Math.sin(t)*amp, y2 = base1 - Math.sin(t*1.3)*amp, y3 = base1 + Math.cos(t*0.8)*amp;
+      p1.setAttribute('d', `M0,${y1} C 240,${y1+60} 480,${y2-40} 720,${y2+10} C 960,${y2+50} 1200,${y3-30} 1440,${y3+10} L1440,220 L0,220 Z`);
+    }
+    if(p2){
+      const y1 = base2 - Math.cos(t*0.9)*amp, y2 = base2 + Math.sin(t*1.1)*amp, y3 = base2 - Math.sin(t*0.7)*amp;
+      p2.setAttribute('d', `M0,${y1} C 260,${y1-70} 500,${y2+90} 740,${y2-40} C 980,${y2-90} 1220,${y3+70} 1440,${y3-30} L1440,220 L0,220 Z`);
+    }
+    requestAnimationFrame(animateWaves);
+  }
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){ animateWaves(); }
+
+  /* THREE.JS HERO 3D PRODUCT */
+  (function initHero3D(){
+    const canvas = document.getElementById('hero-canvas');
+    if(!canvas || !window.THREE || window.matchMedia('(prefers-reduced-motion: reduce)').matches || window.innerWidth < 980) return;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+    camera.position.set(0, 0.4, 7);
+
+    function resize(){
+      const w = canvas.clientWidth || canvas.parentElement.clientWidth * 0.6;
+      const h = canvas.clientHeight || canvas.parentElement.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+
+    // group holding device
+    const group = new THREE.Group();
+    scene.add(group);
+
+    const bodyGeo = new THREE.CylinderGeometry(1, 1, 2.6, 48, 1, false);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x0e2030, metalness: 0.7, roughness: 0.25, emissive: 0x081018 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.rotation.z = Math.PI / 2;
+    group.add(body);
+
+    // glowing seam ring representing the hydro module
+    const ringGeo = new THREE.TorusGeometry(1.01, 0.05, 16, 64);
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0x3fe0ff, emissive: 0x3fe0ff, emissiveIntensity: 1.4, metalness: 0.2, roughness: 0.3 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.y = Math.PI / 2;
+    group.add(ring);
+
+    // end caps glow
+    [-1.32, 1.32].forEach(x => {
+      const capGeo = new THREE.CircleGeometry(0.94, 48);
+      const capMat = new THREE.MeshStandardMaterial({ color: 0x14304a, metalness: 0.6, roughness: 0.3, emissive: 0x0a1a28 });
+      const cap = new THREE.Mesh(capGeo, capMat);
+      cap.position.x = x;
+      cap.rotation.y = x > 0 ? Math.PI / 2 : -Math.PI / 2;
+      group.add(cap);
+    });
+
+    // particles (water droplets orbiting)
+    const pGeo = new THREE.BufferGeometry();
+    const count = 140;
+    const positions = new Float32Array(count * 3);
+    for(let i=0;i<count;i++){
+      const a = Math.random() * Math.PI * 2;
+      const r = 2 + Math.random() * 1.6;
+      positions[i*3] = Math.cos(a) * r;
+      positions[i*3+1] = (Math.random()-0.5) * 3;
+      positions[i*3+2] = Math.sin(a) * r - 1;
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const pMat = new THREE.PointsMaterial({ color: 0x3fe0ff, size: 0.045, transparent: true, opacity: 0.75 });
+    const points = new THREE.Points(pGeo, pMat);
+    scene.add(points);
+
+    scene.add(new THREE.AmbientLight(0x4a6b8a, 1.1));
+    const key = new THREE.PointLight(0x3fe0ff, 6, 20);
+    key.position.set(3, 3, 4);
+    scene.add(key);
+    const rim = new THREE.PointLight(0x2e7cf6, 4, 20);
+    rim.position.set(-4, -2, -3);
+    scene.add(rim);
+
+    let mouseX = 0, mouseY = 0;
+    window.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / window.innerWidth - 0.5);
+      mouseY = (e.clientY / window.innerHeight - 0.5);
+    });
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    function animate(){
+      group.rotation.y += 0.006;
+      group.rotation.x += (mouseY * 0.3 - group.rotation.x) * 0.03;
+      group.rotation.z = Math.PI/2 + (mouseX * 0.15);
+      points.rotation.y -= 0.0015;
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+    animate();
+  })();
+</script>
+
+</body>
+</html>
